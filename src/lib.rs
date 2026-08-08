@@ -1,6 +1,8 @@
 pub mod ast;
 pub mod binder;
 pub mod checker;
+pub mod emitter;
+pub mod fuzz;
 pub mod interner;
 pub mod lexer;
 pub mod parser;
