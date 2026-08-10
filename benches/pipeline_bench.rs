@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
+use criterion::{Criterion, Throughput, black_box, criterion_group, criterion_main};
 use rtsc::ast::AstArena;
 use rtsc::binder::Binder;
 use rtsc::checker::TypeChecker;

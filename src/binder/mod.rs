@@ -1,9 +1,9 @@
 // Binder & Scope Analysis engine.
 // Uses compact integer SymbolId and ScopeId with contiguous arrays to prevent pointer-chasing and allocation overhead.
 
-use std::collections::HashMap;
 use crate::ast::{AstArena, NodeId, NodeKind};
 use crate::interner::NameId;
+use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct SymbolId(pub u32);
@@ -88,7 +88,13 @@ impl Binder {
         }
     }
 
-    pub fn declare_symbol(&mut self, name: NameId, flags: u16, decl: NodeId, scope_id: ScopeId) -> SymbolId {
+    pub fn declare_symbol(
+        &mut self,
+        name: NameId,
+        flags: u16,
+        decl: NodeId,
+        scope_id: ScopeId,
+    ) -> SymbolId {
         let sym_id = SymbolId(self.symbols.len() as u32);
         self.symbols.push(Symbol::new(name, flags, decl));
 

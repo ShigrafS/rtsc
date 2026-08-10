@@ -15,7 +15,12 @@ impl Emitter {
         }
     }
 
-    pub fn emit_program(&mut self, root: NodeId, arena: &AstArena, interner: &StringInterner) -> String {
+    pub fn emit_program(
+        &mut self,
+        root: NodeId,
+        arena: &AstArena,
+        interner: &StringInterner,
+    ) -> String {
         self.output.clear();
         if root == NodeId::DUMMY {
             return self.output.clone();

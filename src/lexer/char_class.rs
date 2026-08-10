@@ -16,22 +16,22 @@ pub enum CharClass {
 
 pub static CHAR_CLASS: [CharClass; 256] = {
     let mut table = [CharClass::Other; 256];
-    
+
     // Whitespace
     table[b' ' as usize] = CharClass::Whitespace;
     table[b'\t' as usize] = CharClass::Whitespace;
-    
+
     // Line breaks
     table[b'\n' as usize] = CharClass::LineBreak;
     table[b'\r' as usize] = CharClass::LineBreak;
-    
+
     // Digits
     let mut b = b'0';
     while b <= b'9' {
         table[b as usize] = CharClass::Digit;
         b += 1;
     }
-    
+
     // Identifier start (a-z, A-Z, _, $)
     let mut b = b'a';
     while b <= b'z' {
@@ -45,17 +45,17 @@ pub static CHAR_CLASS: [CharClass; 256] = {
     }
     table[b'_' as usize] = CharClass::IdentifierStart;
     table[b'$' as usize] = CharClass::IdentifierStart;
-    
+
     // Quotes
     table[b'"' as usize] = CharClass::Quote;
     table[b'\'' as usize] = CharClass::Quote;
-    
+
     // Backtick
     table[b'`' as usize] = CharClass::Backtick;
-    
+
     // Slash
     table[b'/' as usize] = CharClass::Slash;
-    
+
     // Operators / Punctuators
     table[b'(' as usize] = CharClass::Operator;
     table[b')' as usize] = CharClass::Operator;
@@ -80,7 +80,7 @@ pub static CHAR_CLASS: [CharClass; 256] = {
     table[b'~' as usize] = CharClass::Operator;
     table[b'<' as usize] = CharClass::Operator;
     table[b'>' as usize] = CharClass::Operator;
-    
+
     table
 };
 

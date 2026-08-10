@@ -6,6 +6,18 @@ use crate::interner::StringInterner;
 use crate::lexer::{Token, TokenKind};
 use crate::span::Span;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseError {
+    pub message: &'static str,
+    pub span: Span,
+}
+
+impl ParseError {
+    pub const fn new(message: &'static str, span: Span) -> Self {
+        Self { message, span }
+    }
+}
+
 pub struct Parser<'a> {
     tokens: &'a [Token],
     src: &'a str,
@@ -14,7 +26,11 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     pub fn new(tokens: &'a [Token], src: &'a str) -> Self {
-        Self { tokens, src, pos: 0 }
+        Self {
+            tokens,
+            src,
+            pos: 0,
+        }
     }
 
     #[inline(always)]
@@ -63,19 +79,30 @@ impl<'a> Parser<'a> {
         };
 
         arena.alloc(
-            HotNode::new(NodeKind::Program, first_stmt, last_stmt, crate::interner::NameId::EMPTY),
+            HotNode::new(
+                NodeKind::Program,
+                first_stmt,
+                last_stmt,
+                crate::interner::NameId::EMPTY,
+            ),
             ColdNode::new(Span::new(start_pos, end_pos)),
         )
     }
 
     fn parse_statement(&mut self, interner: &mut StringInterner, arena: &mut AstArena) -> NodeId {
         match self.peek() {
-            TokenKind::Const | TokenKind::Let | TokenKind::Var => self.parse_variable_declaration(interner, arena),
+            TokenKind::Const | TokenKind::Let | TokenKind::Var => {
+                self.parse_variable_declaration(interner, arena)
+            }
             _ => self.parse_expression_statement(interner, arena),
         }
     }
 
-    fn parse_variable_declaration(&mut self, interner: &mut StringInterner, arena: &mut AstArena) -> NodeId {
+    fn parse_variable_declaration(
+        &mut self,
+        interner: &mut StringInterner,
+        arena: &mut AstArena,
+    ) -> NodeId {
         let kw_tok = self.bump(); // const / let / var
         let ident_tok = self.bump();
         let ident_text = ident_tok.span_text(self.src);
@@ -108,14 +135,23 @@ impl<'a> Parser<'a> {
         )
     }
 
-    fn parse_expression_statement(&mut self, interner: &mut StringInterner, arena: &mut AstArena) -> NodeId {
+    fn parse_expression_statement(
+        &mut self,
+        interner: &mut StringInterner,
+        arena: &mut AstArena,
+    ) -> NodeId {
         let expr = self.parse_expression(interner, arena);
         if self.peek() == TokenKind::Semicolon {
             self.bump();
         }
         let cold_span = arena.get_cold(expr).span;
         arena.alloc(
-            HotNode::new(NodeKind::ExprStmt, expr, NodeId::DUMMY, crate::interner::NameId::EMPTY),
+            HotNode::new(
+                NodeKind::ExprStmt,
+                expr,
+                NodeId::DUMMY,
+                crate::interner::NameId::EMPTY,
+            ),
             ColdNode::new(cold_span),
         )
     }
@@ -130,7 +166,12 @@ impl<'a> Parser<'a> {
             let end = arena.get_cold(right).span.end;
 
             left = arena.alloc(
-                HotNode::new(NodeKind::BinaryExpr, left, right, crate::interner::NameId::EMPTY),
+                HotNode::new(
+                    NodeKind::BinaryExpr,
+                    left,
+                    right,
+                    crate::interner::NameId::EMPTY,
+                ),
                 ColdNode::new(Span::new(start, end)),
             );
         }
@@ -138,7 +179,11 @@ impl<'a> Parser<'a> {
         left
     }
 
-    fn parse_primary_expression(&mut self, interner: &mut StringInterner, arena: &mut AstArena) -> NodeId {
+    fn parse_primary_expression(
+        &mut self,
+        interner: &mut StringInterner,
+        arena: &mut AstArena,
+    ) -> NodeId {
         let tok = self.bump();
         match tok.kind {
             TokenKind::NumericLiteral => {
@@ -156,7 +201,12 @@ impl<'a> Parser<'a> {
                 )
             }
             _ => arena.alloc(
-                HotNode::new(NodeKind::Identifier, NodeId::DUMMY, NodeId::DUMMY, crate::interner::NameId::EMPTY),
+                HotNode::new(
+                    NodeKind::Identifier,
+                    NodeId::DUMMY,
+                    NodeId::DUMMY,
+                    crate::interner::NameId::EMPTY,
+                ),
                 ColdNode::new(Span::new(tok.start, tok.end)),
             ),
         }
