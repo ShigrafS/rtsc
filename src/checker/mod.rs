@@ -1,8 +1,8 @@
 // Type Checker Engine with canonical types, integer TypeId, and assignability relation caching.
 
-use std::collections::HashMap;
 use crate::ast::{AstArena, NodeId, NodeKind};
 use crate::interner::NameId;
+use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct TypeId(pub u32);
@@ -50,14 +50,14 @@ impl Default for TypeChecker {
             assignability_cache: HashMap::with_capacity(1024),
         };
         // Register canonical built-in primitives
-        checker.types.push(TypeKind::Any);       // 0
-        checker.types.push(TypeKind::Unknown);   // 1
-        checker.types.push(TypeKind::Number);    // 2
-        checker.types.push(TypeKind::String);    // 3
-        checker.types.push(TypeKind::Boolean);   // 4
-        checker.types.push(TypeKind::Void);      // 5
+        checker.types.push(TypeKind::Any); // 0
+        checker.types.push(TypeKind::Unknown); // 1
+        checker.types.push(TypeKind::Number); // 2
+        checker.types.push(TypeKind::String); // 3
+        checker.types.push(TypeKind::Boolean); // 4
+        checker.types.push(TypeKind::Void); // 5
         checker.types.push(TypeKind::Undefined); // 6
-        checker.types.push(TypeKind::Null);      // 7
+        checker.types.push(TypeKind::Null); // 7
         checker
     }
 }

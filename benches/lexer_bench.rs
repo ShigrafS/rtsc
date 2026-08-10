@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use rtsc::lexer::{Lexer, TokenKind};
 
 fn bench_lexer_workloads(c: &mut Criterion) {
@@ -47,13 +47,34 @@ fn bench_lexer_workloads(c: &mut Criterion) {
 
     // 3. Real-world project corpus stubs (React, TS, VSCode, Next.js, Angular, Node, Deno)
     let real_world_cases = [
-        ("React_Component", "import React from 'react'; export const Button = ({ label }) => <button>{label}</button>;"),
-        ("TypeScript_Compiler", "interface CompilerOptions { target?: string; module?: string; strict?: boolean; }"),
-        ("VSCode_Editor", "export class TextEditor { private doc: string; constructor(doc: string) { self.doc = doc; } }"),
-        ("NextJS_App", "export default function Page({ data }) { return <div>{data.title}</div>; }"),
-        ("Angular_Module", "@Component({ selector: 'app-root', template: '<h1>App</h1>' }) export class AppComponent {}"),
-        ("Node_Server", "const http = require('http'); http.createServer((req, res) => res.end('OK')).listen(8080);"),
-        ("Deno_Runtime", "import { serve } from 'https://deno.land/std/http/server.ts'; serve((_req) => new Response('OK'));"),
+        (
+            "React_Component",
+            "import React from 'react'; export const Button = ({ label }) => <button>{label}</button>;",
+        ),
+        (
+            "TypeScript_Compiler",
+            "interface CompilerOptions { target?: string; module?: string; strict?: boolean; }",
+        ),
+        (
+            "VSCode_Editor",
+            "export class TextEditor { private doc: string; constructor(doc: string) { self.doc = doc; } }",
+        ),
+        (
+            "NextJS_App",
+            "export default function Page({ data }) { return <div>{data.title}</div>; }",
+        ),
+        (
+            "Angular_Module",
+            "@Component({ selector: 'app-root', template: '<h1>App</h1>' }) export class AppComponent {}",
+        ),
+        (
+            "Node_Server",
+            "const http = require('http'); http.createServer((req, res) => res.end('OK')).listen(8080);",
+        ),
+        (
+            "Deno_Runtime",
+            "import { serve } from 'https://deno.land/std/http/server.ts'; serve((_req) => new Response('OK'));",
+        ),
     ];
 
     for (name, sample) in real_world_cases {

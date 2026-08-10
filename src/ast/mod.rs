@@ -52,7 +52,12 @@ mod tests {
     #[test]
     fn test_ast_arena_alloc() {
         let mut arena = AstArena::new();
-        let hot = HotNode::new(NodeKind::Identifier, NodeId::DUMMY, NodeId::DUMMY, NameId(1));
+        let hot = HotNode::new(
+            NodeKind::Identifier,
+            NodeId::DUMMY,
+            NodeId::DUMMY,
+            NameId(1),
+        );
         let cold = ColdNode::new(Span::new(0, 3));
         let id = arena.alloc(hot, cold);
 

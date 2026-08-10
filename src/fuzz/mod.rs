@@ -35,9 +35,11 @@ impl DifferentialFuzzer {
 
         let mut src = String::new();
         let mut state = seed;
-        
+
         let mut next_rand = || {
-            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            state = state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
             state
         };
 
@@ -71,7 +73,11 @@ impl DifferentialFuzzer {
     }
 
     // Differential test assertion against reference lexer stream
-    pub fn verify_differential(&self, src: &str, reference: &[(TokenKind, String)]) -> Result<(), String> {
+    pub fn verify_differential(
+        &self,
+        src: &str,
+        reference: &[(TokenKind, String)],
+    ) -> Result<(), String> {
         let actual = self.tokenize_rtsc(src);
         if actual.len() != reference.len() {
             return Err(format!(

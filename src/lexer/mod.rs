@@ -101,7 +101,10 @@ impl<'a> Lexer<'a> {
                 b'@' => Token::new(TokenKind::At, start, self.pos as u32),
 
                 b'.' => {
-                    if self.peek_byte() == b'.' && self.pos + 1 < self.end && self.src[self.pos + 1] == b'.' {
+                    if self.peek_byte() == b'.'
+                        && self.pos + 1 < self.end
+                        && self.src[self.pos + 1] == b'.'
+                    {
                         self.pos += 2;
                         Token::new(TokenKind::DotDotDot, start, self.pos as u32)
                     } else {
@@ -288,7 +291,11 @@ impl<'a> Lexer<'a> {
         while self.pos < self.end && self.src[self.pos].is_ascii_digit() {
             self.pos += 1;
         }
-        if self.pos < self.end && self.src[self.pos] == b'.' && self.pos + 1 < self.end && self.src[self.pos + 1].is_ascii_digit() {
+        if self.pos < self.end
+            && self.src[self.pos] == b'.'
+            && self.pos + 1 < self.end
+            && self.src[self.pos + 1].is_ascii_digit()
+        {
             self.pos += 1;
             while self.pos < self.end && self.src[self.pos].is_ascii_digit() {
                 self.pos += 1;
@@ -322,14 +329,19 @@ impl<'a> Lexer<'a> {
                 self.bump();
             }
         }
-        Token::new(TokenKind::NoSubstitutionTemplateLiteral, start, self.pos as u32)
+        Token::new(
+            TokenKind::NoSubstitutionTemplateLiteral,
+            start,
+            self.pos as u32,
+        )
     }
 
     #[inline(always)]
     fn scan_slash(&mut self, start: u32) -> Token {
         if self.peek_byte() == b'/' {
             self.bump();
-            while self.pos < self.end && self.src[self.pos] != b'\n' && self.src[self.pos] != b'\r' {
+            while self.pos < self.end && self.src[self.pos] != b'\n' && self.src[self.pos] != b'\r'
+            {
                 self.pos += 1;
             }
             Token::new(TokenKind::SingleLineComment, start, self.pos as u32)
