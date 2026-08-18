@@ -77,12 +77,30 @@ fn main() {
             }
             println!("✅ 100 differential fuzzing iterations passed cleanly!");
         }
+        "profile" => {
+            let file_path = args.get(2).map(|s| s.as_str()).unwrap_or("src/index.ts");
+            let source = match fs::read_to_string(file_path) {
+                Ok(content) => content,
+                Err(_) => {
+                    // Fallback to synthetic multi-statement TS source for profiling demo
+                    let mut s = String::new();
+                    for i in 0..500 {
+                        s.push_str(&format!("const item_{} = {} + {};\n", i, i, i * 2));
+                    }
+                    s
+                }
+            };
+            println!("📊 Profiling compiler pipeline across {} bytes of TypeScript...", source.len());
+            let (metrics, _) = rtsc::telemetry::profile_compiler_pipeline(&source);
+            metrics.print_dashboard();
+        }
         _ => {
             println!("⚡ rtsc - Rust TypeScript Compiler");
             println!("Usage:");
-            println!("  rtsc check [file.ts]  Run type checking pipeline");
-            println!("  rtsc build [file.ts]  Compile and emit JS output");
-            println!("  rtsc fuzz             Run differential fuzzing suite");
+            println!("  rtsc check [file.ts]    Run type checking pipeline");
+            println!("  rtsc build [file.ts]    Compile and emit JS output");
+            println!("  rtsc profile [file.ts]  Profile all pipeline stages and memory usage");
+            println!("  rtsc fuzz               Run differential fuzzing suite");
         }
     }
 }
