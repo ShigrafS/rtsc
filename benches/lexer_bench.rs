@@ -88,5 +88,41 @@ fn bench_lexer_workloads(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_lexer_workloads);
+fn bench_character_classification(c: &mut Criterion) {
+    let mut group = c.benchmark_group("char_classification_methods");
+
+    let sample_bytes: Vec<u8> = (0..=255u8).cycle().take(4096).collect();
+    group.throughput(Throughput::Bytes(sample_bytes.len() as u64));
+
+    // 1. Range check pattern matching
+    group.bench_function("range_check_match", |b| {
+        b.iter(|| {
+            let mut count = 0;
+            for &byte in black_box(&sample_bytes) {
+                if matches!(byte, b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'_' | b'$') {
+                    count += 1;
+                }
+            }
+            count
+        });
+    });
+
+    // 2. Table-driven bitmask classification
+    group.bench_function("table_bitmask_lookup", |b| {
+        b.iter(|| {
+            let mut count = 0;
+            for &byte in black_box(&sample_bytes) {
+                if rtsc::lexer::char_class::is_ident_continue(byte) {
+                    count += 1;
+                }
+            }
+            count
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group!(benches, bench_lexer_workloads, bench_character_classification);
 criterion_main!(benches);
+

@@ -78,12 +78,17 @@ impl<'a> Lexer<'a> {
             }
 
             let token = match b {
+                // 1. Identifiers & Keywords (~40% of JS/TS tokens)
+                b'a'..=b'z' | b'A'..=b'Z' | b'_' | b'$' => self.scan_identifier(start),
+
+                // 2. Whitespace & Line breaks (~20-25% of tokens)
                 b' ' | b'\t' => self.scan_whitespace(start),
                 b'\n' | b'\r' => Token::new(TokenKind::LineBreak, start, self.pos as u32),
 
-                b'a'..=b'z' | b'A'..=b'Z' | b'_' | b'$' => self.scan_identifier(start),
+                // 3. Numbers (~5%)
                 b'0'..=b'9' => self.scan_number(start),
 
+                // 4. Strings, Templates, Comments
                 b'"' | b'\'' => self.scan_string(start, b),
                 b'`' => self.scan_template(start),
                 b'/' => self.scan_slash(start),
@@ -240,7 +245,7 @@ impl<'a> Lexer<'a> {
 
     #[inline(always)]
     fn scan_whitespace(&mut self, start: u32) -> Token {
-        while self.pos < self.end && (self.src[self.pos] == b' ' || self.src[self.pos] == b'\t') {
+        while self.pos < self.end && char_class::is_whitespace(self.src[self.pos]) {
             self.pos += 1;
         }
         Token::new(TokenKind::Whitespace, start, self.pos as u32)
@@ -248,13 +253,8 @@ impl<'a> Lexer<'a> {
 
     #[inline(always)]
     fn scan_identifier(&mut self, start: u32) -> Token {
-        while self.pos < self.end {
-            let b = self.src[self.pos];
-            if matches!(b, b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'_' | b'$') {
-                self.pos += 1;
-            } else {
-                break;
-            }
+        while self.pos < self.end && char_class::is_ident_continue(self.src[self.pos]) {
+            self.pos += 1;
         }
         let text = &self.src[start as usize..self.pos];
         let kind = match text {
