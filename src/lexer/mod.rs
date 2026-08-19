@@ -105,132 +105,17 @@ impl<'a> Lexer<'a> {
                 b'~' => Token::new(TokenKind::Tilde, start, self.pos as u32),
                 b'@' => Token::new(TokenKind::At, start, self.pos as u32),
 
-                b'.' => {
-                    if self.peek_byte() == b'.' && self.pos + 1 < self.end && self.src[self.pos + 1] == b'.' {
-                        self.pos += 2;
-                        Token::new(TokenKind::DotDotDot, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::Dot, start, self.pos as u32)
-                    }
-                }
-
-                b'=' => {
-                    if self.peek_byte() == b'=' {
-                        self.bump();
-                        if self.peek_byte() == b'=' {
-                            self.bump();
-                            Token::new(TokenKind::EqualsEqualsEquals, start, self.pos as u32)
-                        } else {
-                            Token::new(TokenKind::EqualsEquals, start, self.pos as u32)
-                        }
-                    } else if self.peek_byte() == b'>' {
-                        self.bump();
-                        Token::new(TokenKind::Arrow, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::Equals, start, self.pos as u32)
-                    }
-                }
-
-                b'!' => {
-                    if self.peek_byte() == b'=' {
-                        self.bump();
-                        if self.peek_byte() == b'=' {
-                            self.bump();
-                            Token::new(TokenKind::ExclamationEqualsEquals, start, self.pos as u32)
-                        } else {
-                            Token::new(TokenKind::ExclamationEquals, start, self.pos as u32)
-                        }
-                    } else {
-                        Token::new(TokenKind::Exclamation, start, self.pos as u32)
-                    }
-                }
-
-                b'+' => {
-                    if self.peek_byte() == b'+' {
-                        self.bump();
-                        Token::new(TokenKind::PlusPlus, start, self.pos as u32)
-                    } else if self.peek_byte() == b'=' {
-                        self.bump();
-                        Token::new(TokenKind::PlusEquals, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::Plus, start, self.pos as u32)
-                    }
-                }
-
-                b'-' => {
-                    if self.peek_byte() == b'-' {
-                        self.bump();
-                        Token::new(TokenKind::MinusMinus, start, self.pos as u32)
-                    } else if self.peek_byte() == b'=' {
-                        self.bump();
-                        Token::new(TokenKind::MinusEquals, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::Minus, start, self.pos as u32)
-                    }
-                }
-
-                b'*' => {
-                    if self.peek_byte() == b'*' {
-                        self.bump();
-                        Token::new(TokenKind::AsteriskAsterisk, start, self.pos as u32)
-                    } else if self.peek_byte() == b'=' {
-                        self.bump();
-                        Token::new(TokenKind::AsteriskEquals, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::Asterisk, start, self.pos as u32)
-                    }
-                }
-
-                b'<' => {
-                    if self.peek_byte() == b'=' {
-                        self.bump();
-                        Token::new(TokenKind::LessThanEquals, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::LessThan, start, self.pos as u32)
-                    }
-                }
-
-                b'>' => {
-                    if self.peek_byte() == b'=' {
-                        self.bump();
-                        Token::new(TokenKind::GreaterThanEquals, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::GreaterThan, start, self.pos as u32)
-                    }
-                }
-
-                b'&' => {
-                    if self.peek_byte() == b'&' {
-                        self.bump();
-                        Token::new(TokenKind::AmpersandAmpersand, start, self.pos as u32)
-                    } else if self.peek_byte() == b'=' {
-                        self.bump();
-                        Token::new(TokenKind::AmpersandEquals, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::Ampersand, start, self.pos as u32)
-                    }
-                }
-
-                b'|' => {
-                    if self.peek_byte() == b'|' {
-                        self.bump();
-                        Token::new(TokenKind::BarBar, start, self.pos as u32)
-                    } else if self.peek_byte() == b'=' {
-                        self.bump();
-                        Token::new(TokenKind::BarEquals, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::Bar, start, self.pos as u32)
-                    }
-                }
-
-                b'?' => {
-                    if self.peek_byte() == b'.' {
-                        self.bump();
-                        Token::new(TokenKind::QuestionDot, start, self.pos as u32)
-                    } else {
-                        Token::new(TokenKind::Question, start, self.pos as u32)
-                    }
-                }
+                b'.' => self.scan_dot(start),
+                b'=' => self.scan_equal(start),
+                b'!' => self.scan_exclamation(start),
+                b'+' => self.scan_plus(start),
+                b'-' => self.scan_minus(start),
+                b'*' => self.scan_asterisk(start),
+                b'<' => self.scan_less_than(start),
+                b'>' => self.scan_greater_than(start),
+                b'&' => self.scan_ampersand(start),
+                b'|' => self.scan_bar(start),
+                b'?' => self.scan_question(start),
 
                 _ => Token::new(TokenKind::Unknown, start, self.pos as u32),
             };
@@ -285,15 +170,110 @@ impl<'a> Lexer<'a> {
 
     #[inline(always)]
     fn scan_number(&mut self, start: u32) -> Token {
-        while self.pos < self.end && self.src[self.pos].is_ascii_digit() {
-            self.pos += 1;
-        }
-        if self.pos < self.end && self.src[self.pos] == b'.' && self.pos + 1 < self.end && self.src[self.pos + 1].is_ascii_digit() {
-            self.pos += 1;
-            while self.pos < self.end && self.src[self.pos].is_ascii_digit() {
-                self.pos += 1;
+        // Hex / Binary / Octal prefix check (e.g. 0x1f, 0b101, 0o777)
+        if self.src[start as usize] == b'0' && self.pos < self.end {
+            let next = self.src[self.pos];
+            match next {
+                b'x' | b'X' => {
+                    self.pos += 1;
+                    while self.pos < self.end {
+                        let b = self.src[self.pos];
+                        if b.is_ascii_hexdigit() || b == b'_' {
+                            self.pos += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    if self.pos < self.end && self.src[self.pos] == b'n' {
+                        self.pos += 1;
+                    }
+                    return Token::new(TokenKind::NumericLiteral, start, self.pos as u32);
+                }
+                b'b' | b'B' => {
+                    self.pos += 1;
+                    while self.pos < self.end {
+                        let b = self.src[self.pos];
+                        if b == b'0' || b == b'1' || b == b'_' {
+                            self.pos += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    if self.pos < self.end && self.src[self.pos] == b'n' {
+                        self.pos += 1;
+                    }
+                    return Token::new(TokenKind::NumericLiteral, start, self.pos as u32);
+                }
+                b'o' | b'O' => {
+                    self.pos += 1;
+                    while self.pos < self.end {
+                        let b = self.src[self.pos];
+                        if (b'0'..=b'7').contains(&b) || b == b'_' {
+                            self.pos += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    if self.pos < self.end && self.src[self.pos] == b'n' {
+                        self.pos += 1;
+                    }
+                    return Token::new(TokenKind::NumericLiteral, start, self.pos as u32);
+                }
+                _ => {}
             }
         }
+
+        // Decimal integer / leading part
+        while self.pos < self.end {
+            let b = self.src[self.pos];
+            if char_class::is_digit(b) || b == b'_' {
+                self.pos += 1;
+            } else {
+                break;
+            }
+        }
+
+        // Fractional part (.123)
+        if self.pos < self.end
+            && self.src[self.pos] == b'.'
+            && self.pos + 1 < self.end
+            && char_class::is_digit(self.src[self.pos + 1])
+        {
+            self.pos += 1;
+            while self.pos < self.end {
+                let b = self.src[self.pos];
+                if char_class::is_digit(b) || b == b'_' {
+                    self.pos += 1;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        // Scientific exponent part (1e10, 2.5E-3)
+        if self.pos < self.end && (self.src[self.pos] == b'e' || self.src[self.pos] == b'E') {
+            let mut exp_pos = self.pos + 1;
+            if exp_pos < self.end && (self.src[exp_pos] == b'+' || self.src[exp_pos] == b'-') {
+                exp_pos += 1;
+            }
+            if exp_pos < self.end && char_class::is_digit(self.src[exp_pos]) {
+                self.pos = exp_pos + 1;
+                while self.pos < self.end {
+                    let b = self.src[self.pos];
+                    if char_class::is_digit(b) || b == b'_' {
+                        self.pos += 1;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Optional BigInt 'n' suffix
+        if self.pos < self.end && self.src[self.pos] == b'n' {
+            self.pos += 1;
+        }
+
         Token::new(TokenKind::NumericLiteral, start, self.pos as u32)
     }
 
@@ -306,6 +286,9 @@ impl<'a> Lexer<'a> {
             }
             if b == b'\\' && self.pos < self.end {
                 self.bump();
+            } else if b == b'\n' || b == b'\r' {
+                // Unterminated single-line string literal spanning newline
+                break;
             }
         }
         Token::new(TokenKind::StringLiteral, start, self.pos as u32)
@@ -313,35 +296,37 @@ impl<'a> Lexer<'a> {
 
     #[inline(always)]
     fn scan_template(&mut self, start: u32) -> Token {
+        let mut is_template_head = false;
         while self.pos < self.end {
             let b = self.bump();
             if b == b'`' {
+                break;
+            }
+            if b == b'$' && self.pos < self.end && self.src[self.pos] == b'{' {
+                self.bump();
+                is_template_head = true;
                 break;
             }
             if b == b'\\' && self.pos < self.end {
                 self.bump();
             }
         }
-        Token::new(TokenKind::NoSubstitutionTemplateLiteral, start, self.pos as u32)
+        let kind = if is_template_head {
+            TokenKind::TemplateHead
+        } else {
+            TokenKind::NoSubstitutionTemplateLiteral
+        };
+        Token::new(kind, start, self.pos as u32)
     }
 
     #[inline(always)]
     fn scan_slash(&mut self, start: u32) -> Token {
         if self.peek_byte() == b'/' {
             self.bump();
-            while self.pos < self.end && self.src[self.pos] != b'\n' && self.src[self.pos] != b'\r' {
-                self.pos += 1;
-            }
-            Token::new(TokenKind::SingleLineComment, start, self.pos as u32)
+            self.scan_single_line_comment(start)
         } else if self.peek_byte() == b'*' {
             self.bump();
-            while self.pos < self.end {
-                if self.bump() == b'*' && self.peek_byte() == b'/' {
-                    self.bump();
-                    break;
-                }
-            }
-            Token::new(TokenKind::MultiLineComment, start, self.pos as u32)
+            self.scan_multi_line_comment(start)
         } else if self.peek_byte() == b'=' {
             self.bump();
             Token::new(TokenKind::SlashEquals, start, self.pos as u32)
@@ -349,6 +334,180 @@ impl<'a> Lexer<'a> {
             Token::new(TokenKind::Slash, start, self.pos as u32)
         }
     }
+
+    #[inline(always)]
+    fn scan_single_line_comment(&mut self, start: u32) -> Token {
+        while self.pos < self.end {
+            let b = self.src[self.pos];
+            if b == b'\n' || b == b'\r' {
+                break;
+            }
+            self.pos += 1;
+        }
+        Token::new(TokenKind::SingleLineComment, start, self.pos as u32)
+    }
+
+    #[inline(always)]
+    fn scan_multi_line_comment(&mut self, start: u32) -> Token {
+        while self.pos < self.end {
+            if self.bump() == b'*' && self.peek_byte() == b'/' {
+                self.bump();
+                break;
+            }
+        }
+        Token::new(TokenKind::MultiLineComment, start, self.pos as u32)
+    }
+
+    #[inline(always)]
+    fn scan_dot(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'.' && self.pos + 1 < self.end && self.src[self.pos + 1] == b'.' {
+            self.pos += 2;
+            Token::new(TokenKind::DotDotDot, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::Dot, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_equal(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'=' {
+            self.bump();
+            if self.peek_byte() == b'=' {
+                self.bump();
+                Token::new(TokenKind::EqualsEqualsEquals, start, self.pos as u32)
+            } else {
+                Token::new(TokenKind::EqualsEquals, start, self.pos as u32)
+            }
+        } else if self.peek_byte() == b'>' {
+            self.bump();
+            Token::new(TokenKind::Arrow, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::Equals, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_exclamation(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'=' {
+            self.bump();
+            if self.peek_byte() == b'=' {
+                self.bump();
+                Token::new(TokenKind::ExclamationEqualsEquals, start, self.pos as u32)
+            } else {
+                Token::new(TokenKind::ExclamationEquals, start, self.pos as u32)
+            }
+        } else {
+            Token::new(TokenKind::Exclamation, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_plus(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'+' {
+            self.bump();
+            Token::new(TokenKind::PlusPlus, start, self.pos as u32)
+        } else if self.peek_byte() == b'=' {
+            self.bump();
+            Token::new(TokenKind::PlusEquals, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::Plus, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_minus(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'-' {
+            self.bump();
+            Token::new(TokenKind::MinusMinus, start, self.pos as u32)
+        } else if self.peek_byte() == b'=' {
+            self.bump();
+            Token::new(TokenKind::MinusEquals, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::Minus, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_asterisk(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'*' {
+            self.bump();
+            Token::new(TokenKind::AsteriskAsterisk, start, self.pos as u32)
+        } else if self.peek_byte() == b'=' {
+            self.bump();
+            Token::new(TokenKind::AsteriskEquals, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::Asterisk, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_ampersand(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'&' {
+            self.bump();
+            Token::new(TokenKind::AmpersandAmpersand, start, self.pos as u32)
+        } else if self.peek_byte() == b'=' {
+            self.bump();
+            Token::new(TokenKind::AmpersandEquals, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::Ampersand, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_bar(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'|' {
+            self.bump();
+            Token::new(TokenKind::BarBar, start, self.pos as u32)
+        } else if self.peek_byte() == b'=' {
+            self.bump();
+            Token::new(TokenKind::BarEquals, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::Bar, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_less_than(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'=' {
+            self.bump();
+            Token::new(TokenKind::LessThanEquals, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::LessThan, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_greater_than(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'=' {
+            self.bump();
+            Token::new(TokenKind::GreaterThanEquals, start, self.pos as u32)
+        } else {
+            Token::new(TokenKind::GreaterThan, start, self.pos as u32)
+        }
+    }
+
+    #[inline(always)]
+    fn scan_question(&mut self, start: u32) -> Token {
+        if self.peek_byte() == b'.' {
+            if self.pos + 1 < self.end && char_class::is_digit(self.src[self.pos + 1]) {
+                Token::new(TokenKind::Question, start, self.pos as u32)
+            } else {
+                self.bump();
+                Token::new(TokenKind::QuestionDot, start, self.pos as u32)
+            }
+        } else if self.peek_byte() == b'?' {
+            self.bump();
+            if self.peek_byte() == b'=' {
+                self.bump();
+                Token::new(TokenKind::QuestionQuestionEquals, start, self.pos as u32)
+            } else {
+                Token::new(TokenKind::QuestionQuestion, start, self.pos as u32)
+            }
+        } else {
+            Token::new(TokenKind::Question, start, self.pos as u32)
+        }
+    }
+
 
     fn scan_unicode(&mut self, start: u32) -> Token {
         // Simple UTF-8 boundary scan for non-ASCII identifier / text
@@ -395,6 +554,84 @@ mod tests {
                 TokenKind::Plus,
                 TokenKind::Identifier,
                 TokenKind::Semicolon,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_scan_number_formats() {
+        let code = "0xFF 0b1010 0o755 3.14 1e-4 100n 1_000_000";
+        let mut lexer = Lexer::new(code);
+        lexer.skip_trivia = true;
+
+        let mut count = 0;
+        loop {
+            let tok = lexer.next_token();
+            if tok.kind == TokenKind::Eof {
+                break;
+            }
+            assert_eq!(tok.kind, TokenKind::NumericLiteral);
+            count += 1;
+        }
+        assert_eq!(count, 7);
+    }
+
+    #[test]
+    fn test_scan_string_and_template_literals() {
+        let code = "\"hello \\\"world\\\"\" `simple template` 'single' `head ${";
+        let mut lexer = Lexer::new(code);
+        lexer.skip_trivia = true;
+
+        let t1 = lexer.next_token();
+        assert_eq!(t1.kind, TokenKind::StringLiteral);
+        assert_eq!(t1.span_text(code), "\"hello \\\"world\\\"\"");
+
+        let t2 = lexer.next_token();
+        assert_eq!(t2.kind, TokenKind::NoSubstitutionTemplateLiteral);
+        assert_eq!(t2.span_text(code), "`simple template`");
+
+        let t3 = lexer.next_token();
+        assert_eq!(t3.kind, TokenKind::StringLiteral);
+        assert_eq!(t3.span_text(code), "'single'");
+
+        let t4 = lexer.next_token();
+        assert_eq!(t4.kind, TokenKind::TemplateHead);
+        assert_eq!(t4.span_text(code), "`head ${");
+    }
+
+    #[test]
+    fn test_scan_comments_and_operators() {
+        let code = "a ?? b ??= c ?. d === e !== f => g // comment\n/* block */ h";
+        let mut lexer = Lexer::new(code);
+        lexer.skip_trivia = true;
+
+        let kinds: Vec<TokenKind> = std::iter::from_fn(|| {
+            let tok = lexer.next_token();
+            if tok.kind == TokenKind::Eof {
+                None
+            } else {
+                Some(tok.kind)
+            }
+        })
+        .collect();
+
+        assert_eq!(
+            kinds,
+            vec![
+                TokenKind::Identifier,
+                TokenKind::QuestionQuestion,
+                TokenKind::Identifier,
+                TokenKind::QuestionQuestionEquals,
+                TokenKind::Identifier,
+                TokenKind::QuestionDot,
+                TokenKind::Identifier,
+                TokenKind::EqualsEqualsEquals,
+                TokenKind::Identifier,
+                TokenKind::ExclamationEqualsEquals,
+                TokenKind::Identifier,
+                TokenKind::Arrow,
+                TokenKind::Identifier,
+                TokenKind::Identifier,
             ]
         );
     }
