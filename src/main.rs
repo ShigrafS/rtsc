@@ -65,17 +65,28 @@ fn main() {
             }
         }
         "fuzz" => {
-            println!("🔥 Running differential fuzzing harness...");
+            let iters: usize = args
+                .get(2)
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(100);
+
+            println!("🔥 Running differential fuzzing & invariant testbed ({} iterations)...", iters);
             let fuzzer = DifferentialFuzzer::new();
-            for seed in 0..100 {
-                let sample_js = fuzzer.generate_random_js(seed);
-                let tokens = fuzzer.tokenize_rtsc(&sample_js);
-                if let Err(err) = fuzzer.verify_differential(&sample_js, &tokens) {
-                    eprintln!("❌ Fuzz failure at seed {}: {}", seed, err);
-                    return;
+            match fuzzer.run_fuzz_suite(iters, 1234567) {
+                Ok(summary) => {
+                    println!("✅ All {} fuzzing iterations passed cleanly in {:?}!", summary.iterations, summary.duration);
+                    println!(
+                        "   Verified {} tokens across {} bytes ({:.1} MB/s throughput)",
+                        summary.total_tokens,
+                        summary.total_bytes,
+                        (summary.total_bytes as f64 / (1024.0 * 1024.0)) / summary.duration.as_secs_f64().max(0.000001)
+                    );
+                }
+                Err(err) => {
+                    eprintln!("❌ Fuzz failure detected: {}", err);
+                    std::process::exit(1);
                 }
             }
-            println!("✅ 100 differential fuzzing iterations passed cleanly!");
         }
         "profile" => {
             let file_path = args.get(2).map(|s| s.as_str()).unwrap_or("src/index.ts");
