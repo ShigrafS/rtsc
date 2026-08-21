@@ -123,6 +123,41 @@ fn bench_character_classification(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_lexer_workloads, bench_character_classification);
+fn bench_keyword_lookup(c: &mut Criterion) {
+    let mut group = c.benchmark_group("keyword_recognition");
+
+    let identifiers = [
+        "const", "let", "return", "function", "if", "else", "class", "interface",
+        "type", "import", "export", "async", "await", "this", "true", "false",
+        "foo", "bar", "handleClick", "data", "renderComponent", "options",
+        "calculateSum", "variableName", "response", "element", "isActive",
+    ];
+
+    let total_bytes: usize = identifiers.iter().map(|s| s.len()).sum();
+    group.throughput(Throughput::Bytes(total_bytes as u64));
+
+    group.bench_function("stratified_keyword_lookup", |b| {
+        b.iter(|| {
+            let mut keywords = 0;
+            for &ident in black_box(&identifiers) {
+                let kind = rtsc::lexer::keyword::lookup_keyword(ident.as_bytes());
+                if kind.is_keyword() {
+                    keywords += 1;
+                }
+            }
+            keywords
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_lexer_workloads,
+    bench_character_classification,
+    bench_keyword_lookup
+);
 criterion_main!(benches);
+
 

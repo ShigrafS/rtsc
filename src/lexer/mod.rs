@@ -1,4 +1,5 @@
 pub mod char_class;
+pub mod keyword;
 pub mod kind;
 
 pub use kind::TokenKind;
@@ -142,29 +143,7 @@ impl<'a> Lexer<'a> {
             self.pos += 1;
         }
         let text = &self.src[start as usize..self.pos];
-        let kind = match text {
-            b"const" => TokenKind::Const,
-            b"let" => TokenKind::Let,
-            b"var" => TokenKind::Var,
-            b"function" => TokenKind::Function,
-            b"return" => TokenKind::Return,
-            b"if" => TokenKind::If,
-            b"else" => TokenKind::Else,
-            b"for" => TokenKind::For,
-            b"while" => TokenKind::While,
-            b"import" => TokenKind::Import,
-            b"export" => TokenKind::Export,
-            b"class" => TokenKind::Class,
-            b"interface" => TokenKind::Interface,
-            b"type" => TokenKind::Type,
-            b"async" => TokenKind::Async,
-            b"await" => TokenKind::Await,
-            b"true" => TokenKind::True,
-            b"false" => TokenKind::False,
-            b"null" => TokenKind::Null,
-            b"undefined" => TokenKind::Undefined,
-            _ => TokenKind::Identifier,
-        };
+        let kind = keyword::lookup_keyword(text);
         Token::new(kind, start, self.pos as u32)
     }
 
