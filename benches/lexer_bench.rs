@@ -152,12 +152,52 @@ fn bench_keyword_lookup(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_token_throughput_rates(c: &mut Criterion) {
+    let mut group = c.benchmark_group("lexer_throughput");
+
+    // Generate ~1 MB realistic TypeScript corpus
+    let mut large_src = String::with_capacity(1_000_000);
+    let stubs = [
+        "export interface UserProfile {\n  id: number;\n  name: string;\n  isActive?: boolean;\n}\n",
+        "export async function fetchUserData(userId: number): Promise<UserProfile> {\n  const res = await api.get(`/users/${userId}`);\n  return res.data;\n}\n",
+        "const DEFAULT_CONFIG = { retries: 3, timeout: 5000, debug: false };\n",
+        "// Fast path evaluation\nif (flags & 0xFF) { const count = calc(42, 100n); }\n",
+    ];
+
+    while large_src.len() < 500_000 {
+        for stub in stubs {
+            large_src.push_str(stub);
+        }
+    }
+
+    group.throughput(Throughput::Bytes(large_src.len() as u64));
+    group.bench_function("synthetic_corpus_500kb", |b| {
+        b.iter(|| {
+            let mut lexer = Lexer::new(black_box(&large_src));
+            lexer.skip_trivia = true;
+            let mut count = 0;
+            loop {
+                let tok = lexer.next_token();
+                if tok.kind == TokenKind::Eof {
+                    break;
+                }
+                count += 1;
+            }
+            count
+        });
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_lexer_workloads,
     bench_character_classification,
-    bench_keyword_lookup
+    bench_keyword_lookup,
+    bench_token_throughput_rates
 );
 criterion_main!(benches);
+
 
 
