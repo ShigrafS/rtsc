@@ -84,6 +84,8 @@ pub enum TokenKind {
     Colon,              // :
     Question,           // ?
     QuestionDot,        // ?.
+    QuestionQuestion,   // ??
+    QuestionQuestionEquals, // ??=
     Equals,             // =
     EqualsEquals,       // ==
     EqualsEqualsEquals, // ===
